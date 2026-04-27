@@ -1,0 +1,231 @@
+\documentclass[lettersize,journal]{IEEEtran}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{cite}
+\usepackage{siunitx}
+
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore exo-skeleton}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Power-Sign-Matched vs Power-Sign-Mismatched Knee Assistance: A Pilot Study Using a Custom-Designed Knee Exoskeleton}
+
+\author{Juncheng Zhou,
+        Weibo Gao,
+        and Hao Su$^\dagger$\thanks{All authors are with the Lab of Biomechatronics and Intelligent Robotics, New York University, New York, NY 11201, USA. $^\dagger$Corresponding author: hao.su@nyu.edu.}}
+
+\maketitle
+
+\begin{abstract}
+\textbf{Scientific problem:} The closest knee evidence suggests that power-aligned assistance can reduce joint-level demand, but direct causality is still missing. In slope walking, power-inspired knee assistance reduced biological knee power by about 22\% uphill and 20\% downhill, with a 13.4\% uphill metabolic reduction, while group-level EMG reduction remained limited \cite{park2020hingefree}. A context-adaptive uphill controller reported 19\% knee-extensor EMG reduction and 5.8\% metabolic reduction at 8.5$^\circ$ \cite{lee2023context}. Timing-sweep evidence in sit-to-stand also reported a U-shaped timing response with a best 19.3\% knee-extensor EMG reduction, indicating strong sensitivity to assistance timing \cite{choi2021timing}. Additional recent knee studies reported quadriceps unloading in weighted stair ascent and improved sit-to-stand performance under EMG-informed powered-knee control, but without explicit matched-versus-mismatched sign testing \cite{boon2025stairs,gunnell2025sts}. However, no healthy-subject knee study has directly compared \emph{power-sign matched} versus \emph{power-sign mismatched} assistance as the primary independent variable under controlled amplitude/work budgets.
+\textbf{Scientific question:} does neuromuscular benefit arise from true sign alignment with biological knee power, or from net energy injection despite partial mismatch?
+\textbf{Method goal:} We propose a knee-only crossover protocol that explicitly tests this sign effect under identical phase windows and matched delivered-work constraints. The core criterion is
+$\operatorname{sign}(P_{\mathrm{exo},k})=\operatorname{sign}(P_{\mathrm{bio},k})$,
+where $P_{\mathrm{exo},k}=\tau_{\mathrm{exo},k}\omega_k$ and
+$P_{\mathrm{bio},k}=M_{\mathrm{bio},k}\omega_k$.
+\textbf{Task objective:} quantify the isolated sign effect on phase-specific quadriceps EMG (RMS and iEMG), then test whether this effect translates to metabolic and biomechanical outcomes. We focus on uphill/downhill tasks to amplify positive and negative knee-power phases and maximize sensitivity to sign-dependent assistance.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Knee exoskeleton, electromyography, biomechanical power, assistance timing, human--robot interaction.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Knee exoskeleton assistance remains a difficult control problem because the knee combines large load-bearing demands with rapid within-stride polarity transitions. During walking, knee function switches from early-stance extension support to pre-swing flexion and late-swing extension braking over short phase intervals; therefore, a torque command can change from cooperative to opposing with only a small timing offset. This makes knee assistance more sensitive to phase alignment than many single-lobe assistance problems and helps explain why practical knee controllers are still largely phase-segmented in deployment.
+
+Consistent with this view, most successful lower-limb systems rely on explicit or implicit timing structure rather than amplitude alone. Across hip and ankle devices, assistance timing can change metabolic and biomechanical outcomes substantially even when actuator capability is unchanged \cite{ding2016timing,galle2017ankle,grimmer2019comparison,lim2019tro}. In addition, changing negative-work assistance does not automatically improve whole-body energetics, indicating that ``more assistance'' is not equivalent to ``better assistance'' unless temporal and mechanical alignment are both respected \cite{malcolm2017negative}. Direct controller-comparison evidence also shows that synchronization design can materially alter outcomes: in naive participants at 4 km/h, implicit synchronization reduced metabolic rate by 18.0\% versus passive mode, while explicit phase-based synchronization achieved 11.6\%, and only the implicit controller remained significantly lower than no-exoskeleton walking (8.8\%) \cite{manzoori2024sync}. These findings are directly relevant to knee assistance, where sign reversals are frequent and narrow in time.
+
+Current knee evidence already suggests the same mechanism. In slope walking, power-inspired knee assistance reduced biological knee power by about 22\% uphill and 20\% downhill, and reduced uphill metabolic rate by 13.4\%, while group-level EMG reduction remained limited \cite{park2020hingefree}. A context-adaptive uphill knee controller reported 19\% knee-extensor EMG reduction and 5.8\% metabolic reduction at 8.5$^\circ$ \cite{lee2023context}. In sit-to-stand, sweeping peak timing of knee assistance yielded a U-shaped response with a best 19.3\% reduction in knee-extensor activation \cite{choi2021timing}. In crouch-gait exoskeleton walking, increasing assistive knee-extension torque was associated with more knee extension and lower biological knee extensor moment, but also higher knee-flexor activity, highlighting magnitude-dependent trade-offs \cite{lerner2017crouch}. By contrast, gains are often smaller or inconsistent in level walking conditions, reinforcing that knee outcomes are strongly task-dependent \cite{mclean2019energetics}. Joint-level mechanics analyses also predict that slope locomotion amplifies knee power demand and therefore improves sensitivity for testing assistance mechanisms \cite{nuckols2020mechanics}.
+
+Recent hardware/control studies reinforce feasibility but not yet mechanism isolation. Lightweight quasi-direct-drive knee exoskeletons with stiffness-based continuous torque control have shown versatile and accurate assistance delivery across walking conditions \cite{huang2022stiffness}. Task-focused studies also reported reduced quadriceps effort during weighted stair ascent and improved sit-to-stand transitions with powered knee systems in clinical populations \cite{boon2025stairs,gunnell2025sts}. For load-focused translation, recent data-driven methods estimated exoskeleton-induced directional changes in peak knee contact force with 90\% early-stance and 79\% late-stance directional accuracy for changes larger than 0.1 BW, supporting future load-aware tuning pipelines \cite{miller2025kcf}. These advances validate controllability and clinical relevance, yet they do not isolate power-sign consistency as an independent causal factor.
+
+Additional knee studies from the reading library reinforce why sign and timing should be isolated explicitly. In level walking, an event-driven powered knee approach reported near-zero mean metabolic change (about 0.07\%) with large inter-subject spread, suggesting that average-level outcomes can hide strong individual response differences \cite{jang2019assistance}. More importantly, a Science study on knee energy-removal assistance showed that two profiles removing similar mechanical power ($\sim$2 W) produced opposite metabolic effects: a muscle-centric profile reduced metabolic cost by 2.5\% and hamstring activation by 11.2\%, whereas a traditional profile increased metabolic cost by 3.1\% \cite{shepertycky2021removing}. This result directly supports the claim that assistance efficacy is determined by \emph{how} and \emph{when} power is exchanged, not by total magnitude alone.
+
+Optimization literature further indicates that assistance benefit is sensitive to magnitude and coordination choices. Human-in-the-loop optimization across single- and multi-joint designs showed substantial metabolic effects but strong dependence on parameterized assistance structure \cite{franks2021compare,bryan2021optimized}. Similar sensitivity appears in older adults and in energy-removing paradigms, where assistance magnitude can cross a transition point and change the direction of benefit \cite{lakmazaheri2024older,shepertycky2023transition}. These findings strengthen the need for matched-budget causal tests in which sign consistency itself is manipulated directly.
+
+These results motivate a sign-explicit formulation. We frame the problem at the power level:
+\begin{equation}
+P_{\mathrm{exo},k}(t)=\tau_{\mathrm{exo},k}(t)\,\omega_k(t), \qquad
+P_{\mathrm{bio},k}(t)=M_{\mathrm{bio},k}(t)\,\omega_k(t),
+\label{eq:power_defs_intro}
+\end{equation}
+where $\tau_{\mathrm{exo},k}$ is exoskeleton knee torque, $M_{\mathrm{bio},k}$ is biological knee moment, and $\omega_k$ is knee angular velocity. This definition matters because torque sign alone is insufficient: the same torque direction can produce positive or negative power depending on instantaneous velocity sign. Therefore, biomechanical cooperation should be evaluated by the sign relation between $P_{\mathrm{exo},k}$ and $P_{\mathrm{bio},k}$, not by torque direction in isolation.
+
+Recent task-agnostic and delayed-output control literature further highlights why this distinction is practical, not only conceptual. Real systems can carry nontrivial delay and filtering effects between control intent and delivered torque, shifting interaction from intended moment assistance toward different power-level behavior \cite{lim2019tro,molinaro2024taskagnostic}. In such conditions, two controllers with similar average torque magnitude may have different physiological consequences if one maintains sign-consistent power interaction and the other does not.
+
+Despite these advances, a key causal test is still missing in the knee literature: there is no direct healthy-subject study that treats \emph{power-sign-matched} versus \emph{power-sign-mismatched} knee assistance as the primary independent variable under matched phase window and matched delivered-budget constraints. Existing studies mostly compare controller classes, adaptive schemes, or assist versus no-assist conditions \cite{park2020hingefree,lee2023context,lee2018autonomous}. This leaves an unresolved mechanism question: are observed benefits driven by true sign alignment with biological knee power, or by net injected energy despite partial mismatch?
+
+This pilot study is designed to answer that mechanism question directly. We focus on uphill and downhill tasks to maximize sign-sensitive contrast, enforce explicit matching constraints on delivered torque and power budgets, and evaluate outcomes with phase-specific EMG, biomechanics, and metabolic metrics. The following sections define the scientific hypotheses and method framework for this sign-isolation experiment.
+
+\section{Scientific Question and Task Objectives}
+\subsection{Scientific Question}
+The central question is:
+\begin{quote}
+\emph{Under matched assistance magnitude and matched phase windows, does power-sign-matched knee assistance reduce phase-specific muscle burden more than power-sign-mismatched assistance?}
+\end{quote}
+
+Formally, define the instantaneous sign-consistency indicator
+\begin{equation}
+\chi(t)=\operatorname{sign}\!\left(P_{\mathrm{exo},k}(t)\,P_{\mathrm{bio},k}(t)\right).
+\label{eq:chi}
+\end{equation}
+Then $\chi(t)=+1$ indicates sign-matched assistance and $\chi(t)=-1$ indicates sign-mismatched interaction.
+
+\subsection{Primary and Secondary Objectives}
+Primary objective (EMG): for target muscle set $\mathcal{M}_{\mathrm{quad}}=\{\mathrm{VM},\mathrm{VL},\mathrm{RF}\}$, test whether sign-matched conditions produce lower phase-specific EMG than sign-mismatched conditions.
+
+Secondary objectives:
+\begin{enumerate}
+    \item metabolic outcome difference between matched and mismatched conditions;
+    \item biological knee moment/power/work reduction in target windows;
+    \item cross-joint compensation at hip/ankle (biomechanical safety check).
+\end{enumerate}
+
+\subsection{Hypotheses}
+Let $Y$ denote an outcome and $\Delta Y = Y_{\mathrm{matched}}-Y_{\mathrm{mismatched}}$ under matched window and matched budget constraints.
+\begin{equation}
+\text{H1: } \Delta \mathrm{EMG}_{\mathrm{phase}} < 0,
+\qquad
+\text{H2: } \Delta \dot E_{\mathrm{met}} < 0,
+\label{eq:hypothesis_h1h2}
+\end{equation}
+with stronger effects expected in slope tasks where knee power demand is larger.
+In parallel, we test whether effects remain after controlling for delivered mechanical budgets:
+\begin{equation}
+\text{H3: } \Delta \mathrm{EMG}_{\mathrm{phase}}<0 \;\text{under}\; \eqref{eq:match_tau}\text{ and }\eqref{eq:match_power}.
+\label{eq:h3}
+\end{equation}
+
+\section{Method Framework}
+\subsection{Biomechanical Definitions}
+For each sample $t$:
+\begin{align}
+M_{\mathrm{bio},k}(t) &= M_{\mathrm{net},k}(t)-\tau_{\mathrm{exo},k}(t),
+\label{eq:mbio}\\
+P_{\mathrm{bio},k}(t) &= M_{\mathrm{bio},k}(t)\,\omega_k(t),
+\label{eq:pbio}\\
+P_{\mathrm{exo},k}(t) &= \tau_{\mathrm{exo},k}(t)\,\omega_k(t).
+\label{eq:pexo}
+\end{align}
+Here $M_{\mathrm{net},k}$ is inverse-dynamics net knee moment.
+
+To avoid sign chatter near zero crossings, define a dead-zone threshold $\delta_P>0$ using baseline cycles:
+\begin{equation}
+\mathcal{W}^{+}=\{\phi: P_{\mathrm{bio},k}^{0}(\phi)>\delta_P\},
+\qquad
+\mathcal{W}^{-}=\{\phi: P_{\mathrm{bio},k}^{0}(\phi)<-\delta_P\},
+\label{eq:phase_windows}
+\end{equation}
+where $\phi\in[0,100\%]$ is gait phase and $P_{\mathrm{bio},k}^{0}$ is the baseline biological power profile.
+
+\subsection{Task and Condition Design}
+Based on literature showing amplified knee-demand effects on slopes \cite{park2020hingefree,lee2023context,nuckols2020mechanics}, we use two primary tasks:
+\begin{enumerate}
+    \item uphill walking: dominant positive-power window (typically early stance),
+    \item downhill walking: dominant negative-power window (typically early stance).
+\end{enumerate}
+
+Default initial windows are set from prior knee slope evidence and then individualized by each subject's baseline zero-crossings:
+\begin{equation}
+\mathcal{W}_{\mathrm{up}}^{+}\approx [0,30]\%\ \text{GC},\qquad
+\mathcal{W}_{\mathrm{down}}^{-}\approx [0,25]\%\ \text{GC}.
+\label{eq:default_windows}
+\end{equation}
+
+Planned conditions per task:
+\begin{enumerate}
+    \item no exoskeleton,
+    \item exoskeleton unpowered (zero-work),
+    \item matched-low, matched-medium,
+    \item mismatched-low, mismatched-medium.
+\end{enumerate}
+An optional condition can be added for timing disentanglement: same-sign time-shifted assistance.
+
+\subsection{Sample Size and Data-Acquisition Plan}
+The first full study targets 20--24 completed healthy participants, with recruitment expanded if needed to account for drop-out or unusable EMG/metabolic trials. This target is chosen because existing knee studies are often small and because the planned interaction terms (condition $\times$ task $\times$ muscle) require higher within-subject statistical power \cite{park2020hingefree,mclean2019energetics,lee2023context}.
+
+Recommended instrumentation and rates are: motion capture (100--200 Hz), force plates or instrumented treadmill (1000--2000 Hz), surface EMG (1000--2000 Hz), and synchronized exoskeleton sensing/control logs ($\ge$500 Hz). Each condition uses a 6-min block with 3--4 min adaptation and a late steady segment for analysis.
+
+\subsection{Sign-Matched vs Sign-Mismatched Control Law}
+Let $g(\phi)\ge 0$ be a fixed envelope and $A\in\{A_{\ell},A_m\}$ be amplitude level. Define reference sign from baseline biological power:
+\begin{equation}
+s_{\mathrm{bio}}(\phi)=\operatorname{sign}\!\left(P_{\mathrm{bio},k}^{0}(\phi)\right).
+\label{eq:sbio}
+\end{equation}
+Assistance command is
+\begin{equation}
+\tau_{\mathrm{cmd}}(\phi;A,m)=A\,g(\phi)\,s_{\mathrm{bio}}(\phi)\,m,
+\qquad m\in\{+1,-1\},
+\label{eq:tau_cmd}
+\end{equation}
+where $m=+1$ is sign-matched and $m=-1$ is sign-mismatched. This flips sign while preserving waveform magnitude and timing envelope.
+
+\subsection{Budget-Matching Constraints}
+To isolate sign effect, matched and mismatched conditions are constrained by delivered-budget matching in each target window $\mathcal{W}_j$:
+\begin{align}
+\left|\int_{\mathcal{W}_j}\!|\tau^{(+)}_{\mathrm{exo},k}(t)|dt-
+\int_{\mathcal{W}_j}\!|\tau^{(-)}_{\mathrm{exo},k}(t)|dt\right| &\le \epsilon_{\tau},
+\label{eq:match_tau}\\
+\left|\int_{\mathcal{W}_j}\!|P^{(+)}_{\mathrm{exo},k}(t)|dt-
+\int_{\mathcal{W}_j}\!|P^{(-)}_{\mathrm{exo},k}(t)|dt\right| &\le \epsilon_{P}.
+\label{eq:match_power}
+\end{align}
+Superscripts $(+)$ and $(-)$ denote matched and mismatched cases.
+
+\subsection{Outcome Metrics}
+For muscle $r$ in phase window $\mathcal{W}_j$ with duration $T_j$:
+\begin{align}
+\mathrm{RMS}_{r,j} &=
+\sqrt{\frac{1}{T_j}\int_{\mathcal{W}_j} e_r^2(t)\,dt},
+\label{eq:rms}\\
+\mathrm{iEMG}_{r,j} &=
+\int_{\mathcal{W}_j} |e_r(t)|\,dt,
+\label{eq:iemg}
+\end{align}
+where $e_r(t)$ is processed EMG envelope.
+
+To directly quantify the sign intervention in each condition, we compute
+\begin{equation}
+R_{\mathrm{sign},j}=
+\frac{1}{T_j}\int_{\mathcal{W}_j}\mathbf{1}\!\left[\chi(t)=+1\right]dt,
+\label{eq:rsign}
+\end{equation}
+which is the matched-sign occupancy in the target window.
+
+Additional mechanics metrics:
+\begin{align}
+W_{\mathrm{bio},j} &= \int_{\mathcal{W}_j} P_{\mathrm{bio},k}(t)\,dt,
+\qquad
+W_{\mathrm{exo},j}=\int_{\mathcal{W}_j} P_{\mathrm{exo},k}(t)\,dt,
+\label{eq:work_terms}\\
+R_{\mathrm{align},j} &=
+\frac{1}{T_j}\int_{\mathcal{W}_j}
+\mathbf{1}\!\left[P_{\mathrm{exo},k}(t)P_{\mathrm{bio},k}(t)>0\right]dt.
+\label{eq:align_ratio}
+\end{align}
+
+\subsection{Statistical Model}
+Primary EMG analysis uses a linear mixed-effects model:
+\begin{equation}
+\log(\mathrm{RMS}_{r,j}) =
+\beta_0 + \beta_1 I_{\mathrm{match}} + \beta_2 I_{\mathrm{mag}} + \beta_3 I_{\mathrm{task}} +
+\beta_4(I_{\mathrm{match}}\times I_{\mathrm{task}}) + b_{0,s} + b_{1,s}I_{\mathrm{match}} + \varepsilon,
+\label{eq:lmm}
+\end{equation}
+where $s$ indexes subject, $b_{0,s},b_{1,s}$ are random effects, and $\varepsilon$ is residual error. The same structure is applied to iEMG and key secondary outcomes. Planned contrasts prioritize matched vs mismatched within each task (uphill, downhill).
+
+\section{Task Goal for the Full Study}
+The full study is designed to deliver a direct, causal answer to the current literature gap:
+\begin{enumerate}
+    \item determine whether power-sign matching itself reduces phase-specific knee-related EMG burden;
+    \item determine whether this neuromuscular effect translates into metabolic and biomechanical benefit;
+    \item provide a reproducible sign-explicit protocol for future knee exoskeleton controller comparisons.
+\end{enumerate}
+
+\bibliographystyle{IEEEtran}
+\bibliography{Reference}
+
+\end{document}
