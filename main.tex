@@ -1,9 +1,38 @@
 \documentclass[lettersize,journal]{IEEEtran}
-
 \usepackage[hidelinks]{hyperref}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[capitalise]{cleveref}
+\usepackage{float}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{mathtools}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
 \usepackage{cite}
+
 \usepackage{siunitx}
+\sisetup{
+  per-mode=symbol,
+  separate-uncertainty=true,
+  detect-all=true
+}
+
+
+\DeclareRobustCommand{\juncheng}[1]{{\textcolor{olive}{#1}}} %Juncheng
+\DeclareRobustCommand{\claude}[1]{{\textcolor{red}{#1}}} %Dr. Su
+\DeclareRobustCommand{\weibo}[1]{{\textcolor{cyan}{#1}}} %Weibo
+\DeclareRobustCommand{\change}[1]{{\textcolor{blue}{#1}}} %Juncheng
+\DeclareRobustCommand{\doublethink}[1]{{\textcolor{pink}{#1}}} %Juncheng
+\DeclareRobustCommand{\claude}[1]{{\textcolor{red}{#1}}} %Dr. Su
 
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore exo-skeleton}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
