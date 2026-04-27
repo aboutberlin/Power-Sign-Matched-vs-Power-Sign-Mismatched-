@@ -20,17 +20,7 @@
 \maketitle
 
 \begin{abstract}
-<<<<<<< HEAD
 Knee exoskeleton control remains difficult because small timing or direction errors can switch assistance from cooperative to opposing within a stride, and current evidence has not isolated whether benefit depends on matching exoskeleton power sign to biological knee power sign under controlled budgets. We propose a knee-only crossover framework that directly compares power-sign-matched and power-sign-mismatched assistance under identical phase windows and matched delivered torque and power budgets. Assistance is defined at the power level, with $P_{\mathrm{exo},k}=\tau_{\mathrm{exo},k}\omega_k$ and $P_{\mathrm{bio},k}=M_{\mathrm{bio},k}\omega_k$, and the matched condition enforces $\operatorname{sign}(P_{\mathrm{exo},k})=\operatorname{sign}(P_{\mathrm{bio},k})$ while the mismatched condition flips sign with the same waveform envelope. The primary endpoint is phase-specific quadriceps EMG (RMS and iEMG), and secondary endpoints include metabolic cost, biological knee moment/power/work, and cross-joint compensation. We focus on uphill and downhill walking to amplify positive and negative knee-power phases and provide a direct causal test of whether sign consistency itself, rather than net injected energy alone, drives neuromuscular and biomechanical benefit.
-=======
-\textbf{Scientific problem:} The closest knee evidence suggests that power-aligned assistance can reduce joint-level demand, but direct causality is still missing. In slope walking, power-inspired knee assistance reduced biological knee power by about 22\% uphill and 20\% downhill, with a 13.4\% uphill metabolic reduction, while group-level EMG reduction remained limited \cite{park2020hingefree}. A context-adaptive uphill controller reported 19\% knee-extensor EMG reduction and 5.8\% metabolic reduction at 8.5$^\circ$ \cite{lee2023context}. Timing-sweep evidence in sit-to-stand also reported a U-shaped timing response with a best 19.3\% knee-extensor EMG reduction, indicating strong sensitivity to assistance timing \cite{choi2021timing}. Additional recent knee studies reported quadriceps unloading in weighted stair ascent and improved sit-to-stand performance under EMG-informed powered-knee control, but without explicit matched-versus-mismatched sign testing \cite{boon2025stairs,gunnell2025sts}. However, no healthy-subject knee study has directly compared \emph{power-sign matched} versus \emph{power-sign mismatched} assistance as the primary independent variable under controlled amplitude/work budgets.
-\textbf{Scientific question:} does neuromuscular benefit arise from true sign alignment with biological knee power, or from net energy injection despite partial mismatch?
-\textbf{Method goal:} We propose a knee-only crossover protocol that explicitly tests this sign effect under identical phase windows and matched delivered-work constraints. The core criterion is
-$\operatorname{sign}(P_{\mathrm{exo},k})=\operatorname{sign}(P_{\mathrm{bio},k})$,
-where $P_{\mathrm{exo},k}=\tau_{\mathrm{exo},k}\omega_k$ and
-$P_{\mathrm{bio},k}=M_{\mathrm{bio},k}\omega_k$.
-\textbf{Task objective:} quantify the isolated sign effect on phase-specific quadriceps EMG (RMS and iEMG), then test whether this effect translates to metabolic and biomechanical outcomes. We focus on uphill/downhill tasks to amplify positive and negative knee-power phases and maximize sensitivity to sign-dependent assistance.
->>>>>>> overleaf/master
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -63,6 +53,19 @@ Recent task-agnostic and delayed-output control literature further highlights wh
 Despite these advances, a key causal test is still missing in the knee literature: there is no direct healthy-subject study that treats \emph{power-sign-matched} versus \emph{power-sign-mismatched} knee assistance as the primary independent variable under matched phase window and matched delivered-budget constraints. Existing studies mostly compare controller classes, adaptive schemes, or assist versus no-assist conditions \cite{park2020hingefree,lee2023context,lee2018autonomous}. This leaves an unresolved mechanism question: are observed benefits driven by true sign alignment with biological knee power, or by net injected energy despite partial mismatch?
 
 This pilot study is designed to answer that mechanism question directly. We focus on uphill and downhill tasks to maximize sign-sensitive contrast, enforce explicit matching constraints on delivered torque and power budgets, and evaluate outcomes with phase-specific EMG, biomechanics, and metabolic metrics. The following sections define the scientific hypotheses and method framework for this sign-isolation experiment.
+
+\begin{figure*}[htbp]
+    \centering
+\includegraphics[width=1\textwidth]
+{figure/figure1EMG.pdf}
+    \setlength{\abovecaptionskip}{-5pt} % 减少图与caption之间间距
+
+    \setlength{\belowcaptionskip}{-30pt} % 减少caption与正文之间间距
+\caption{Preliminary EMG profiles across the gait cycle from the initial pilot trial. This figure is intended as a first qualitative baseline for subsequent analysis and protocol refinement.}
+    \label{fig:gait_segmentation}
+\end{figure*}
+
+
 
 \section{Scientific Question and Task Objectives}
 \subsection{Scientific Question}
