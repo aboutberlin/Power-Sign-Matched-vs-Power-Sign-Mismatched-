@@ -1,0 +1,370 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[capitalise]{cleveref}
+\usepackage{float}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{mathtools}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{cite}
+
+\usepackage{siunitx}
+\sisetup{
+  per-mode=symbol,
+  separate-uncertainty=true,
+  detect-all=true
+}
+
+
+\DeclareRobustCommand{\juncheng}[1]{{\textcolor{olive}{#1}}} %Juncheng
+\DeclareRobustCommand{\hao}[1]{{\textcolor{red}{#1}}} %Dr. Su
+\DeclareRobustCommand{\weibo}[1]{{\textcolor{cyan}{#1}}} %Weibo
+\DeclareRobustCommand{\change}[1]{{\textcolor{blue}{#1}}} %Juncheng
+\DeclareRobustCommand{\doublethink}[1]{{\textcolor{pink}{#1}}} %Juncheng
+
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage{balance}
+\begin{document}
+\title{PositiveAssist-DBN: A Universal Delay BottleNeck for Positive-Power Ratio Enhancement Without Torque-Profile Redesign}
+\author{Juncheng Zhou,   
+        Weibo Gao,
+        Jin Sen Huang, Kurt Lin, Wanqi Wu,
+        Hao Su$^\dagger$,~\IEEEmembership{IEEE Senior Member}
+\thanks{This work was supported in part by NSF CPS 2344956, GCR 2524088, and NIH 1R01EB035404-01. 
+All authors are with Lab of Biomechatronics and Intelligent Robotics, Department of Biomedical Engineering, New York University, New York, NY 11201, USA. This study was approved by the NYU Tandon Biomedical Engineering (BME) Institutional Review Board (Protocol IRB-FY2025-10361). $^*$Corresponding author: hao.su@nyu.edu. ChatGPT was used during the preparation of
+this manuscript to refine the writing after the authors completed the initial
+draft.}}
+% \markboth{Journal of \LaTeX\ Class Files,~Vol.~18, No.~9, September~2020}%
+% {How to Use the IEEEtran \LaTeX \ Templates}
+
+\maketitle
+
+\begin{abstract}
+Assistance timing is a key determinant of whether exoskeleton torque helps or resists human motion. Most existing controllers improve timing by redesigning the torque generator itself, or by using a fixed delay tuned for limited users and conditions. This paper asks a different question: can timing alone be personalized online, while keeping the original torque profile unchanged? We introduce \emph{DBN} (Delay BottleNeck), a controller-agnostic runtime layer that applies bilateral output delay as a tunable neuromechanical alignment variable after any base controller. DBN uses a safe online adaptation rule driven by mechanical-power metrics: a primary ratio constraint for positive-power dominance and a secondary objective that maximizes positive power per second while suppressing negative power. The update logic is gated by valid-motion detection and stabilized with bounded step size, dwell time, and delay bounds, so the adaptation runs without disrupting the 100~Hz control loop. We evaluate the method across four base controllers (two neural and two classical) under fixed torque-profile settings. Experiments show that optimal delay is strongly subject-specific, can be identified online with stable convergence, and substantially improves positive-power quality compared with fixed-delay operation across users and speeds. These results establish delay personalization as an independent, high-yield optimization axis for hip exoskeleton assistance.
+\end{abstract}
+
+% Providing robust and effective assistance from lower limb exoskeletons across a wide range of dynamic gaits, from walking to running and stair climbing, remains challenging. This paper introduces an Energy-Gated Controller (EGC) framework for lower limb exoskeleton assistance. The EGC operates robustly using only angle and angular velocity, from IMU sensors. \hao{the goal is to deliver positive power? if yes, than make it clear}. Its core mechanism employs a two-module process. First, energy gate enables torque delivery only when predicted positive power exceeds a threshold, suppressing unhelpful negative work; Second, Torque Synthesis reconstructs a full-cycle torque profile using a phase-delayed, sign-inverted flexion torque replica, ensuring biologically plausible timing with low complexity. We implemented the EGC on a compact hip exoskeleton and comprehensively validated it on six healthy adults. With a single, fixed parameter set, the controller demonstrated robust operation without retuning across speeds of 0.75–3.5 m/s. Our results show that over 97\% of the delivered mechanical power was positive during walking, remaining above 89.7\% even at fast running speeds. This fixed parameter set also seamlessly managed overground gait transitions without oscillation or torque inversion. Furthermore, a head-to-head comparison with a representative delayed-feedback controller showed EGC significantly increased the positive-power ratio while substantially reducing negative-power lobes. These findings establish EGC as a intuitive, sensing-light, and energy-efficient , providing  effective hip assistance across diverse gaits and tasks with clear potential for broader lower limb exoskeleton applications.
+
+\begin{IEEEkeywords}
+Wearable robotics, hip exoskeleton, assistance timing, online personalization, delayed output adaptation, positive mechanical power.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Assistance timing is a first-order factor in lower-limb exoskeleton performance. For cyclic locomotion, the same torque magnitude can either inject useful positive work or produce resistive interaction, depending on when that torque is applied relative to joint kinematics and velocity \cite{sawicki2015timing,lee2017timing,grimmer2019comparison}. This timing sensitivity is consistent with the underlying locomotion mechanics reported in classical and modern biomechanics studies \cite{cavagna1977work,winter1987biomechanics,farris2012mechanics,donelan2002step,nuckols2020mechanics}. In all cases, timing remains a central variable.
+
+A broad range of exoskeleton control strategies has been proposed to handle timing across users, speeds, and tasks. Oscillator and phase-based approaches estimate cyclic structure explicitly \cite{ronsse2010adaptive,ronsse2011synchrony,ronsse2011oscillator,seo2015afo,seo2018adaptive,seo2016fullyautonomous,jang2015online}, while delayed-output formulations use shifted kinematic feedback without explicit gait-state classification \cite{lim2019ral,lim2019tro,lim2023ral}. Other representative families include generalized assistive frameworks, gait-mode detection, noncontact sensing, proportional moment shaping, and modular energy shaping \cite{oh2015generalized,huo2018fast,crea2019capacitive,gasparri2019proportional,lin2024modular}. These control advances have been enabled by parallel hardware progress from compact hip devices to high-bandwidth actuation and foldable high-torque platforms \cite{sugar2016hesa,murray2014assistive,mooney2014autonomous,yu2020quasi,yan2025compact}, and have motivated broad translation discussions for real-world deployment \cite{siviy2023opportunities,maggioni2023aan}.
+
+Recent learning-based methods further improve adaptability and reduce manual engineering of task-specific rules \cite{luo2024nature,kim2025drl,molinaro2024estimating,lee2024sciadv}. In parallel, human-in-the-loop and preference-based optimization show that individualized parameters can substantially improve outcomes \cite{ding2018humanloop,lee2023userpref}. Metabolic studies in soft and rigid wearable systems also highlight the benefit of careful temporal assistance design \cite{kim2019science,lee2017runningexosuit}. However, most optimization workflows jointly modify waveform shape, gain, and timing, making it difficult to isolate the causal contribution of timing alone.
+
+This creates a specific unresolved gap: whether a subject-specific optimal delay exists as an independent control variable, and whether that delay can be identified online without changing the base torque policy. This question matters for both scientific interpretation and deployment. Scientifically, it tests whether inter-subject timing heterogeneity is itself a dominant source of performance variation. Practically, it offers a low-cost adaptation pathway: preserve a validated controller, and personalize only its temporal alignment.
+
+Motivated by this gap, we formulate online \emph{neuromechanical delay identification} as a controller-agnostic runtime problem. We introduce \emph{DBN} (Delay BottleNeck), a plug-in output layer that applies adjustable bilateral delay to the base controller command, while leaving torque generation unchanged. The adaptation objective is power-oriented: maintain high positive-power dominance and then maximize positive power per second under that constraint. To ensure deployment safety and stability, updates are restricted to valid-motion windows and regulated by bounded step size, dwell time, and delay bounds. Thus, adaptation occurs on a slow supervisory timescale, while the underlying 100~Hz control law remains untouched.
+
+Unlike prior timing methods that are embedded inside a specific controller structure \cite{lim2019tro,lim2023ral,zhou2026positiveassist}, DBN is designed as a universal backend that can be attached to neural and classical controllers alike. This design directly tests the hypothesis that delay personalization alone can recover substantial positive-power gains without torque-profile redesign.
+
+The main contributions of this work are:
+\begin{enumerate}
+\item We formulate the \emph{delay bottleneck} problem for hip exoskeleton assistance and show how to study delay as an independent variable under fixed torque profiles.
+\item We propose DBN, a controller-agnostic online personalization layer that identifies subject-specific bilateral delay during runtime.
+\item We present a safe adaptation strategy that combines power-ratio constraint, positive-power maximization, valid-motion gating, and stability guards for real-time deployment.
+\item We validate the method across four controller families (two neural and two classical), demonstrating cross-subject delay heterogeneity, online convergence, and improved positive-power quality versus fixed-delay operation.
+\end{enumerate}
+
+\section{Method}
+\subsection{DBN Architecture and Delay-Only Formulation}
+Let a base controller (neural or classical) generate hip torques
+$\tau^{\mathrm{base}}_i(t)$ for each leg $i\in\{L,R\}$. DBN is inserted strictly
+after this torque generator and before the actuator command:
+\begin{equation}
+\tau^{\mathrm{cmd}}_i(t)=\tau^{\mathrm{base}}_i\!\left(t-d_i(t)\right), \quad i\in\{L,R\},
+\label{eq:dbn_ct}
+\end{equation}
+where $d_i(t)$ is the adaptive delay variable (ms). DBN is delay-only:
+it does not modify controller parameters, gain structure, or waveform
+generation logic inside the base torque model.
+
+At control period $T_s=\SI{0.01}{s}$, the discrete form is
+\begin{equation}
+\tau^{\mathrm{cmd}}_i[k]=\tau^{\mathrm{base}}_i[k-n_i[k]], \quad
+n_i[k]=\mathrm{round}\!\left(\frac{d_i[k]}{T_s}\right),
+\label{eq:dbn_dt}
+\end{equation}
+with $d_i[k]\in[d_{\min},d_{\max}]$ and independent left/right updates.
+
+For a window of length $T_w$, define
+\begin{align}
+P_i(t;d_i) &= \tau^{\mathrm{cmd}}_i(t;d_i)\,\omega_i(t),\\
+W_i^+(d_i) &= \int_{t\in\mathcal{W}} [P_i(t;d_i)]_+\,dt,\\
+W_i^-(d_i) &= \int_{t\in\mathcal{W}} [P_i(t;d_i)]_-\,dt \le 0,\\
+\rho_i(d_i) &= \frac{W_i^+(d_i)}{W_i^+(d_i)+|W_i^-(d_i)|},\\
+P_{i,+/s}(d_i) &= \frac{W_i^+(d_i)}{T_w}, \quad
+P_{i,-/s}(d_i) = \frac{W_i^-(d_i)}{T_w}.
+\end{align}
+The scalar objective used by the optimizer is
+\begin{equation}
+J_i(d_i)=P_{i,+/s}(d_i)-\lambda[\rho^\star-\rho_i(d_i)]_+^2-\mu|P_{i,-/s}(d_i)|,
+\label{eq:obj}
+\end{equation}
+with target $\rho^\star=0.95$.
+
+\subsection{Per-Leg 1D Bayesian Optimization Update}
+Each leg is optimized independently as a one-dimensional Bayesian
+optimization problem over delay $d_i$.
+At outer-loop index $t$ (window-level update),
+\begin{equation}
+y_{i,t}=f_i(d_{i,t})+\epsilon_{i,t},
+\label{eq:obs_model}
+\end{equation}
+where $f_i(\cdot)$ is the unknown window reward (e.g., \eqref{eq:obj})
+and $\epsilon_{i,t}$ is zero-mean noise.
+
+We place a Gaussian process prior
+\begin{equation}
+f_i \sim \mathcal{GP}(0,k_i(\cdot,\cdot)),
+\end{equation}
+and obtain posterior mean/variance $(\mu_{i,t-1}(d),\sigma_{i,t-1}(d))$.
+For GP-UCB, the acquisition is
+\begin{equation}
+a^{\mathrm{UCB}}_{i,t}(d)=\mu_{i,t-1}(d)+\sqrt{\beta_t}\,\sigma_{i,t-1}(d),
+\label{eq:ucb}
+\end{equation}
+and for expected improvement (EI) \cite{jones1998ego},
+\begin{equation}
+a^{\mathrm{EI}}_{i,t}(d)=
+(\mu_{i,t-1}(d)-y_i^{+}-\xi)\Phi(z)+\sigma_{i,t-1}(d)\phi(z),
+\label{eq:ei}
+\end{equation}
+with
+\begin{equation}
+z=\frac{\mu_{i,t-1}(d)-y_i^{+}-\xi}{\sigma_{i,t-1}(d)}.
+\end{equation}
+The raw candidate is
+\begin{equation}
+d_{i,t+1}^{\mathrm{raw}}=\arg\max_{d\in[d_{\min},d_{\max}]}
+a_{i,t}(d).
+\label{eq:raw_pick}
+\end{equation}
+
+DBN then applies a safety projection with bounded step size:
+\begin{equation}
+\tilde d_{i,t+1}=
+\Pi_{\,[d_{\min},d_{\max}]\cap[d_{i,t}-\Delta d_{\max},\,d_{i,t}+\Delta d_{\max}]}
+\left(d_{i,t+1}^{\mathrm{raw}}\right),
+\label{eq:projection}
+\end{equation}
+and updates only if motion is valid and dwell is satisfied:
+\begin{equation}
+d_{i,t+1}=
+\begin{cases}
+\tilde d_{i,t+1}, & m_{i,t}=1,\; t-t_{i,\mathrm{chg}}\ge T_{\mathrm{dwell}},\;
+|\tilde d_{i,t+1}-d_{i,t}|\ge \delta_d,\\
+d_{i,t}, & \text{otherwise}.
+\end{cases}
+\label{eq:update_rule}
+\end{equation}
+Here $m_{i,t}$ is a motion-valid gate, and $L/R$ use separate BO
+states and posteriors.
+
+\subsection{Theoretical Validity: DDE Stability, BO Regret, and Two-Time-Scale Operation}
+\textbf{(1) Inner-loop delayed-system stability.}
+Following simplified delayed-feedback gait models \cite{lim2019tro},
+the DBN-coupled interaction can be approximated by
+\begin{equation}
+\ddot y(t)+b\dot y(t)+ky(t)=-g\,y(t-\Delta)+\tau_{\mathrm{ext}}(t),
+\label{eq:dde_model}
+\end{equation}
+with characteristic equation
+\begin{equation}
+s^2+bs+k+g e^{-s\Delta}=0.
+\label{eq:char_eq}
+\end{equation}
+For fixed $(g,\Delta)$, stability requires $\Re(s)<0$ for all roots.
+This defines a stable delay domain $\mathcal{D}_{\mathrm{stab}}$, computable
+numerically (e.g., Lambert-$W$-based root analysis) as in \cite{lim2019tro}.
+In operation, delay updates are constrained to this stable domain.
+
+\textbf{(2) BO no-regret under quasi-stationary windows.}
+Assume for each leg: (A1) in a local window, $f_i(d)$ is approximately
+stationary and smooth; (A2) $f_i$ has bounded complexity under kernel
+$k_i$; (A3) $\epsilon_{i,t}$ is sub-Gaussian.
+Under standard GP-UCB conditions \cite{srinivas2010gpucb},
+cumulative regret satisfies
+\begin{equation}
+R_{i,T}=\sum_{t=1}^{T}\left(f_i(d_i^\star)-f_i(d_{i,t})\right)
+=\mathcal{O}\!\left(\sqrt{T\,\beta_T\,\gamma_T}\right),
+\label{eq:regret}
+\end{equation}
+thus $R_{i,T}/T\to 0$, indicating asymptotically vanishing average regret.
+
+\textbf{(3) Two-time-scale practical stability.}
+The control loop runs at \SI{100}{Hz}, while BO updates run on a slower
+window timescale (e.g., \SI{1}{Hz}).
+With $T_s\ll T_{\mathrm{BO}}$, bounded update step
+$|d_{i,t+1}-d_{i,t}|\le\Delta d_{\max}$, and dwell/gating in
+\eqref{eq:update_rule}, delay varies slowly and piecewise-constantly.
+This supports a practical separation of timescales: the inner loop
+remains bounded and responsive, while the outer loop performs online
+delay personalization.
+
+\section{Experimental Design and Evaluation Plan}
+\subsection{Claims and hypotheses}
+We explicitly test three scientific questions: (i) whether the optimal assistance delay is subject-specific, (ii) whether left/right delays should be decoupled, and (iii) whether delay can be identified online without controller mode switching. These are operationalized as:
+\begin{enumerate}
+\item \textbf{H1 (subject specificity):} the steady-state optimal delay differs significantly across subjects.
+\item \textbf{H2 (bilateral decoupling):} in Auto condition, steady-state left/right delays are not constrained to be equal and exhibit measurable separation.
+\item \textbf{H3 (online convergence):} delay and power metrics converge during continuous operation without changing controller mode.
+\end{enumerate}
+
+\subsection{Full-factor protocol (high-coverage setting)}
+We plan a full-factor within-subject protocol with four controller families:
+\begin{enumerate}
+\item NN-PD
+\item NN-Residual
+\item Samsung
+\item Energy Gate
+\end{enumerate}
+Each controller is tested on six subjects, three treadmill speeds (\SI{0.75}{m/s}, \SI{1.25}{m/s}, \SI{1.75}{m/s}), and two delay conditions:
+\begin{enumerate}
+\item \textbf{Fixed Delay:} NN controllers fixed at \SI{100}{ms}, Samsung fixed at \SI{250}{ms}, Energy Gate fixed at 40\% phase delay.
+\item \textbf{Auto Delay:} DBN online adaptation enabled with per-leg independent delay updates.
+\end{enumerate}
+
+\begin{table}[t]
+\centering
+\caption{Planned experiment matrix and workload.}
+\label{tab:exp_matrix}
+\begin{tabularx}{\columnwidth}{lX}
+\toprule
+Factor & Levels \\
+\midrule
+Controller family & NN-PD, NN-Residual, Samsung, Energy Gate \\
+Subjects & 6 \\
+Speeds & \SI{0.75}{m/s}, \SI{1.25}{m/s}, \SI{1.75}{m/s} \\
+Delay condition & Fixed vs Auto \\
+Fixed-delay baseline & NN: \SI{100}{ms}; Samsung: \SI{250}{ms}; EG: 40\% phase \\
+\midrule
+Trials per task group & $4 \times 6 \times 3 \times 2 = 144$ \\
+Trials for two task groups & $288$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Trial timeline and logging}
+Each trial is run in a single controller mode from start to end (no mode switching). A recommended timeline is: warm-up period (excluded from analysis), adaptation/observation period, and steady-state period for final metric extraction. The following streams are logged continuously at runtime: delay$_L$, delay$_R$, power ratio, $+P/s$, $-P/s$, motion-valid flags, and torque/kinematics.
+
+\subsection{Key protocol constraints (explicit fairness reminders)}
+To isolate the effect of delay and support causal interpretation, we enforce:
+\begin{enumerate}
+\item \textbf{Delay-only intervention:} for Auto vs Fixed comparison, torque generator, network weights, gains, filters, and runtime scale remain identical.
+\item \textbf{No manual retuning during a trial:} once a trial starts, no mid-trial parameter edits except automatic delay updates in Auto condition.
+\item \textbf{Same safety envelope across conditions:} identical torque limits, delay bounds, dwell constraints, and update rate.
+\item \textbf{No controller-mode switching within trial:} adaptation must converge online under continuous operation.
+\item \textbf{Fixed condition is bilateral-locked:} $d_L=d_R=d_{\text{fixed}}$ by definition.
+\end{enumerate}
+
+\subsection{Evaluation metrics}
+For each leg $i\in\{L,R\}$, instantaneous mechanical power is:
+\begin{equation}
+P_i(t)=\tau_i(t)\,\omega_i(t),
+\end{equation}
+where $\omega_i$ is in rad/s.
+Windowed positive/negative work and derived metrics are:
+\begin{align}
+W_i^+ &= \int [P_i(t)]_+\,dt, \\
+W_i^- &= \int [P_i(t)]_-\,dt \le 0, \\
+\rho_i &= \frac{W_i^+}{W_i^+ + |W_i^-|}, \\
+P_{i,+/s} &= \frac{W_i^+}{T}, \quad P_{i,-/s} = \frac{W_i^-}{T}.
+\end{align}
+
+\textbf{Primary endpoints}:
+\begin{enumerate}
+\item $\rho$ (positive-power ratio)
+\item $P_{+/s}$ (positive power per second)
+\item $P_{-/s}$ (negative power per second)
+\end{enumerate}
+
+\textbf{Convergence metrics}:
+\begin{enumerate}
+\item Settling time $T_{\text{settle}}$ for delay and $\rho$
+\item Steady-state delay variability $\sigma_{d,\text{ss}}$
+\item Steady-state power variability $\sigma_{\rho,\text{ss}}$
+\end{enumerate}
+
+\textbf{Decoupling and heterogeneity metrics}:
+\begin{enumerate}
+\item Bilateral delay gap $\Delta d_{\text{ss}} = |d_{L,\text{ss}} - d_{R,\text{ss}}|$
+\item Subject/speed/task variance of $d_{\text{ss}}$
+\item Improvement over fixed baseline: $\Delta \rho$, $\Delta P_{+/s}$, $\Delta P_{-/s}$
+\end{enumerate}
+
+\textbf{Exploratory metric (optional)}:
+\begin{equation}
+\mathrm{SI}_{\tau}=\frac{\left|\mathrm{RMS}(\tau_L)-\mathrm{RMS}(\tau_R)\right|}
+{\mathrm{RMS}(\tau_L)+\mathrm{RMS}(\tau_R)},
+\end{equation}
+used to probe whether bilateral torque symmetry increases under Auto condition.
+
+\subsection{Claim-to-metric mapping}
+The expected outcomes are evaluated with explicit metric pairs:
+\begin{enumerate}
+\item \textbf{Auto delay converges after transient:} supported by low $T_{\text{settle}}$ and low $\sigma_{d,\text{ss}}$.
+\item \textbf{PPR converges with delay:} supported by low $T_{\text{settle}}$ for $\rho$ and low $\sigma_{\rho,\text{ss}}$.
+\item \textbf{Left/right delays decouple in Auto:} supported by $\Delta d_{\text{ss}}$ distribution and side-specific mixed-effects tests.
+\item \textbf{Delay depends on subject/speed/task context:} supported by significant fixed effects and interactions on $d_{\text{ss}}$.
+\item \textbf{Auto improves power quality over Fixed:} supported by positive $\Delta\rho$, positive $\Delta P_{+/s}$, and less negative $\Delta P_{-/s}$.
+\item \textbf{Bilateral torque symmetry may improve:} explored using $\mathrm{SI}_{\tau}$ as a secondary, non-primary endpoint.
+\end{enumerate}
+
+\subsection{Statistics plan}
+For primary outcomes, we use repeated-measures mixed-effects models with subject as a random effect:
+\begin{equation}
+y \sim \text{condition} * \text{controller} * \text{speed} + (1|\text{subject}).
+\end{equation}
+For Auto-only delay heterogeneity analyses:
+\begin{equation}
+d_{\text{ss}} \sim \text{controller} * \text{speed} + (1|\text{subject}),
+\end{equation}
+with side-specific extensions when testing bilateral decoupling.
+Post-hoc pairwise tests are corrected for multiple comparisons (Holm). We report confidence intervals and effect sizes alongside $p$-values.
+
+% Future work will incorporate metabolic measurement, adaptive parameter strategies for higher speed and perturbation scenarios, and human-exoskeleton interface instrumentation to extend the evaluation to interaction-level biomechanics.
+% \begin{table*}[t]
+% \centering
+% \caption{Comparison between Samsung controller at 4~km/h and EGC at 1.25~m/s (matched speed scale)}
+% \label{tab:samsung_vs_egc}
+% \begin{tabular}{lcccc}
+% \hline
+% Controller & Speed (converted)& Speed  & Mean Positive Power & RMS Torque \\
+%  &  &  & (W per leg) & (Nm) \\
+% \hline
+% Samsung  & 1.11 m/s & 4 km/h & 10.9 ± 1.1 W & $ 5.5$
+%  \\
+% EGC   & 1.25 m/s & 4.50 km/h & 8.3 ± 0.9 W & $ 5.2$ \\
+% \hline
+% \end{tabular}
+% \end{table*}
+
+%\newpage 
+\small 
+\bibliographystyle{IEEEtran}   
+\bibliography{Reference.bib}
+
+
+
+
+
+\end{document}
